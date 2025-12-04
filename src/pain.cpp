@@ -1,6 +1,8 @@
 #include "board.h"
 
 int main() {
-    Board b;
-    b.print();
+    // Board b;
+    // b.print();
+
+
 }

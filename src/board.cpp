@@ -2,7 +2,7 @@
 
 
 
-Board::Board() : m_toMove(1) {
+Board::Board() : m_toMove(1), m_BlackCastle(NO_CASTLE), m_WhiteCastle(NO_CASTLE), m_enPas(NO_ENPAS) {
     // create temp variable which should nicely initialize board
     int start[BOARD_SIZE] = {
     brook, bknight, bbishop, bqueen, bking, bbishop, bknight, brook, off, off, off, off, off, off, off, off,
@@ -41,7 +41,7 @@ std::string Board::getFen() {
             if (curr_sq != 112) fen += "/";
         } else { // valid board square
             if (board[curr_sq] != empty) { // we enemptiesered a piece 
-                if (empties != empty) fen += std::to_string(empties);
+                if (empties != 0) fen += std::to_string(empties);
                 empties = 0; // reset the empties emptieser
             }
             // if not let's get the character at the board
@@ -63,7 +63,43 @@ std::string Board::getFen() {
 
         }
         curr_sq++; // proceed to next square.
+    }
 
+    // end of pieces processing
+    fen += " "; // add space 
+
+    // check if it is w/b turn
+    if (m_toMove == WHITE_MOVE) fen += "w";
+    else fen += "b";
+
+    // end of turn processing
+    fen += " "; // more space
+
+    // castling right's check
+    if (m_BlackCastle == NO_CASTLE && m_WhiteCastle == NO_CASTLE) fen += "-";
+    else {
+
+        // if value in the m_whitecastle is any of these constants defined in .h
+
+        switch (m_WhiteCastle) {
+            case SHORT_CASTLE   : fen += "K"; break; 
+            case LONG_CASTLE    : fen += "Q"; break;
+            case BOTH_CASTLE    : fen += "KQ"; break; 
+        }
+
+        switch (m_BlackCastle) {
+            case SHORT_CASTLE   : fen += "K"; break; 
+            case LONG_CASTLE    : fen += "Q"; break;
+            case BOTH_CASTLE    : fen += "KQ"; break;     
+        }
+    }
+
+    fen += " "; // add space to prepare for next token
+
+    // prepare for enPas
+    if (m_enPas == NO_ENPAS) fen += "-";
+    else {
+        // there's an enpassent square available
     }
 
 }
