@@ -144,17 +144,18 @@ std::string Board::getFen() {
     fen += " ";
 
     // half moves since last capture or pawn movement
-    fen += m_halfMoves;
+    fen += std::to_string(m_halfMoves);
 
     fen += " ";
 
     // full moves since game, starts at 1, incremented after first black move
-    fen += m_fullMoves;
+    fen += std::to_string(m_fullMoves);
 
     //return fen string
     return fen;
 
 }
+
 
 void Board::print() const {
     std::string pieces {".PRNBQKprnbqk"}; // string pieces to map appropriate piece with enum --see board.h
@@ -171,5 +172,6 @@ void Board::print() const {
         std::cout << endl;
     }
     std::cout << "   a b c d e f g h" << endl;
+    
 
 }
