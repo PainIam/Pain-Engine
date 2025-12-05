@@ -37,6 +37,8 @@ class Board {
         int m_enPas;
         int m_WhiteCastle;
         int m_BlackCastle;
+        int m_halfMoves;
+        int m_fullMoves;
     public:
         Board();
         void print() const;

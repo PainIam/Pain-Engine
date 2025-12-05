@@ -2,7 +2,13 @@
 
 
 
-Board::Board() : m_toMove(1), m_BlackCastle(NO_CASTLE), m_WhiteCastle(NO_CASTLE), m_enPas(NO_ENPAS) {
+Board::Board() : 
+    m_toMove(1), 
+    m_BlackCastle(NO_CASTLE), 
+    m_WhiteCastle(NO_CASTLE),
+    m_enPas(NO_ENPAS), 
+    m_halfMoves(0),
+    m_fullMoves(1)  {
     // create temp variable which should nicely initialize board
     int start[BOARD_SIZE] = {
     brook, bknight, bbishop, bqueen, bking, bbishop, bknight, brook, off, off, off, off, off, off, off, off,
@@ -99,8 +105,54 @@ std::string Board::getFen() {
     // prepare for enPas
     if (m_enPas == NO_ENPAS) fen += "-";
     else {
+        m_enPas = curr_sq; // initialize the varibale to hold the enpas square
+
         // there's an enpassent square available
+
+        /*
+         find the exact rank and file
+         indices in 0x88 are represented by the first4 bits representing the rank, the last the file
+         we can isolate last 4 bits by shifting the first 4 like index >> 4, if we have 0000 1111, 
+         shifting it gives us 0000
+
+         for files we isolate the first 4 by ANDing the index with 0xF(15), which in binary is 0000 1111
+         and thing with any byte will result in the first 4 bits being 0, thus resulting in 1111 assuming
+         we AND-ed it with 15
+        */
+
+        switch(m_enPas & 0xF) {
+            case 0  : fen += "a"; break;
+            case 1  : fen += "b"; break;
+            case 2  : fen += "c"; break;
+            case 3  : fen += "d"; break;
+            case 4  : fen += "e"; break;
+            case 5  : fen += "f"; break;
+            case 6  : fen += "g"; break;
+            case 7  : fen += "h"; break;
+            default :
+                fen += "error in enPas square";
+        }
+
+        switch(m_enPas >> 4) {
+            case 3  : fen += "3"; break;
+            case 6  : fen += "6"; break;
+            default : 
+                fen += "error in enPas square"; 
+        }
     }
+
+    fen += " ";
+
+    // half moves since last capture or pawn movement
+    fen += m_halfMoves;
+
+    fen += " ";
+
+    // full moves since game, starts at 1, incremented after first black move
+    fen += m_fullMoves;
+
+    //return fen string
+    return fen;
 
 }
 
