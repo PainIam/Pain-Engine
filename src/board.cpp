@@ -103,9 +103,9 @@ std::string Board::getFen() {
     fen += " "; // add space to prepare for next token
 
     // prepare for enPas
+    m_enPas = curr_sq; // initialize the varibale to hold the enpas square
     if (m_enPas == NO_ENPAS) fen += "-";
     else {
-        m_enPas = curr_sq; // initialize the varibale to hold the enpas square
 
         // there's an enpassent square available
 
