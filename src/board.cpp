@@ -94,9 +94,9 @@ std::string Board::getFen() {
         }
 
         switch (m_BlackCastle) {
-            case SHORT_CASTLE   : fen += "K"; break; 
-            case LONG_CASTLE    : fen += "Q"; break;
-            case BOTH_CASTLE    : fen += "KQ"; break;     
+            case SHORT_CASTLE   : fen += "k"; break; 
+            case LONG_CASTLE    : fen += "q"; break;
+            case BOTH_CASTLE    : fen += "kq"; break;     
         }
     }
 
