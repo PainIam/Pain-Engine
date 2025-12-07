@@ -103,7 +103,6 @@ std::string Board::getFen() {
     fen += " "; // add space to prepare for next token
 
     // prepare for enPas
-    m_enPas = curr_sq; // initialize the varibale to hold the enpas square
     if (m_enPas == NO_ENPAS) fen += "-";
     else {
 
@@ -157,13 +156,70 @@ std::string Board::getFen() {
 }
 
 
+/*
+    takes an fen string and sets the board as per the fen
+*/
+
+void Board::setFen(const std::string& fen) {
+
+
+    // empty the board
+    board[BOARD_SIZE] = {empty};
+
+    // holds current char of fen
+    char curr_char;
+
+    // holds index of the boards, starts at a8, which is index 0 in my version of 0x88
+    unsigned int  board_index = 0;
+
+    // space counter
+    int space_counter = 0;
+
+    // terminating char, end of string
+    char endFen = '\0';
+    
+    // go till the end of the string
+    for (unsigned it = 0; curr_char != ' '; it++) {
+        curr_char = fen[it];
+        if (curr_char == '/')
+            board_index += 8; // go to first file of the next rank
+        else 
+            // find out which character it is, via a switch statement
+            switch (curr_char) {
+                case 'r' : board[board_index] = brook;
+                case 'n' : board[board_index] = bknight;
+                case 'b' : board[board_index] = bbishop;
+                case 'q' : board[board_index] = bqueen;
+                case 'k' : board[board_index] = bking;
+                case 'p' : board[board_index] = bpawn;
+                case 'R' : board[board_index] = wrook;
+                case 'N' : board[board_index] = wknight;
+                case 'B' : board[board_index] = wbishop;
+                case 'Q' : board[board_index] = wqueen;
+                case 'K' : board[board_index] = wking;
+                case 'P' : board[board_index] = wpawn;
+                default : 
+                    board[board_index] += curr_char - '0'; // it is a number of empty squares, therefore we must skip them
+            }
+    }
+
+
+    // we are done traversing through pieces
+
+    // whose turn is it ?
+    
+
+
+}
+
+
 void Board::print() const {
     std::string pieces {".PRNBQKprnbqk"}; // string pieces to map appropriate piece with enum --see board.h
 
     std::cout << endl;
-    for (int rank = 0; rank < 8; rank++) {
+    for (unsigned int rank = 0; rank < 8; rank++) {
         std::cout << 8 - rank << "  "; 
-        for (int file = 0; file < 16; file++) {
+        for (unsigned int file = 0; file < 16; file++) {
             int square = (rank * 16) + file; // square variable
 
             if ((square & 0x88) == 0)

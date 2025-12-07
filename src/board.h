@@ -43,4 +43,5 @@ class Board {
         Board();
         void print() const;
         std::string getFen();
+        void setFen(const std::string&);
 };
