@@ -38,19 +38,19 @@ std::string Board::getFen() {
     int empties = 0; // to empties empty squares
  
     while(curr_sq <= 119) {
-        if ((curr_sq & 0x88) != 0) {
+        if (!(curr_sq & 0x88)) { // if it is not a valid square
             if (empties != 0) {
-                fen += std::to_string(empties); // pb empties of empty squares if we're at end of rank
+                fen += std::to_string(empties); // push_back empties of empty squares if we're at end of rank
                 empties = 0; // reset the emptieser
             }
             curr_sq += rank_inc; // jump down to the the next rank
             if (curr_sq != 112) fen += "/";
         } else { // valid board square
-            if (board[curr_sq] != empty) { // we enemptiesered a piece 
-                if (empties != 0) fen += std::to_string(empties);
-                empties = 0; // reset the empties emptieser
+            if (board[curr_sq] != empty) { // if there's a piece on the square 
+                if (empties != 0) fen += std::to_string(empties); // if there were empties before the piece, record it to the string
+                empties = 0; // reset the empties counter
             }
-            // if not let's get the character at the board
+            // record the character which we're at
             switch(board[curr_sq]) {
 					case wking  : fen += "K";	break;
 					case wqueen : fen += "Q";   break;
@@ -64,7 +64,7 @@ std::string Board::getFen() {
 					case bbishop: fen += "b";   break;
 					case bknight: fen += "n";   break;
 					case bpawn  : fen += "p";	break;
-                    default     : empties++; // increment the empty square emptieser if 
+                    default     : empties++; // increment the empty squares counter if for some reason this is an empty square
             }
 
         }
@@ -160,55 +160,70 @@ std::string Board::getFen() {
     takes an fen string and sets the board as per the fen
 */
 
-void Board::setFen(const std::string& fen) {
+void Board::setFen(const std::string & fen) {
 
-
-    // empty the board
-    board[BOARD_SIZE] = {empty};
-
-    // holds current char of fen
-    char curr_char;
-
-    // holds index of the boards, starts at a8, which is index 0 in my version of 0x88
-    unsigned int  board_index = 0;
-
-    // space counter
-    int space_counter = 0;
-
-    // terminating char, end of string
-    char endFen = '\0';
-    
-    // go till the end of the string
-    for (unsigned it = 0; curr_char != ' '; it++) {
-        curr_char = fen[it];
-        if (curr_char == '/')
-            board_index += 8; // go to first file of the next rank
-        else 
-            // find out which character it is, via a switch statement
-            switch (curr_char) {
-                case 'r' : board[board_index] = brook;
-                case 'n' : board[board_index] = bknight;
-                case 'b' : board[board_index] = bbishop;
-                case 'q' : board[board_index] = bqueen;
-                case 'k' : board[board_index] = bking;
-                case 'p' : board[board_index] = bpawn;
-                case 'R' : board[board_index] = wrook;
-                case 'N' : board[board_index] = wknight;
-                case 'B' : board[board_index] = wbishop;
-                case 'Q' : board[board_index] = wqueen;
-                case 'K' : board[board_index] = wking;
-                case 'P' : board[board_index] = wpawn;
-                default : 
-                    board[board_index] += curr_char - '0'; // it is a number of empty squares, therefore we must skip them
-            }
+    /*  empty board to prepare it with new board structure,
+        from the fen string we're parsing
+    */
+    for (unsigned int i = 0; i < BOARD_SIZE; i++) {
+        board[i] = empty;
     }
 
+    int i = 0; // keeps track of where we are in the fen str
 
-    // we are done traversing through pieces
+    int bindex = 0; // where we are in the box, starts with 0, because my a8 = 0
 
-    // whose turn is it ?
-    
+    int currStage = 0; // makes it easier to tell which stage of the fen we're at
 
+    char currChar; // to store current character of the str
+
+    while (i < fen.size()) { // iterate until the end of the fen
+
+        currChar = fen[i];
+
+        // do we need to go to the next stage of the fen ?
+        if (currChar == ' ') {
+            i++; // go to the next fen character
+            currChar = fen[i];
+            currStage++;
+        }
+
+        // what stage are we at ?
+        switch (currStage) {
+            case 0 : {
+                if (currChar == '/') bindex += 8; // my 0x88 layout allows this
+                switch (currChar) {
+                    // whites
+                    case 'K' : board[bindex] = wking;   bindex++; break;
+                    case 'Q' : board[bindex] = wqueen;  bindex++; break;
+                    case 'B' : board[bindex] = wbishop; bindex++; break;
+                    case 'N' : board[bindex] = wknight; bindex++; break;
+                    case 'R' : board[bindex] = wrook;   bindex++; break;
+                    case 'P' : board[bindex] = wpawn;   bindex++; break;
+
+                    // blacks
+                    case 'k': board[bindex] = bking;    bindex++; break;
+                    case 'q': board[bindex] = bqueen;   bindex++; break;
+                    case 'r': board[bindex] = brook;    bindex++; break;
+                    case 'b': board[bindex] = bbishop;  bindex++; break;
+                    case 'n': board[bindex] = bknight;  bindex++; break;
+                    case 'p': board[bindex] = bpawn;    bindex++; break;
+                
+                    // the dafault case is that it is a number <= 8, so skip those x squares 
+                    default : bindex += currChar - '0'; break;
+                }
+                break;
+            }
+            case 1 : {
+                // who's turn to move
+                if (currChar == 'w') m_toMove = WHITE_MOVE;
+                else m_toMove = BLACK_MOVE;
+                break;
+            }
+
+        }
+        i++; // go to next char
+    }
 
 }
 
