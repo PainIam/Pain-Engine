@@ -220,6 +220,69 @@ void Board::setFen(const std::string & fen) {
                 else m_toMove = BLACK_MOVE;
                 break;
             }
+            case 2 : {
+                // castling
+                if (currChar == '-') {
+                    m_WhiteCastle = NO_CASTLE;
+                    m_BlackCastle = NO_CASTLE; // if there's no castling, available
+                }
+
+                // whites
+                case 'K' : m_WhiteCastle = CASTLE_SHORT; break;
+                case 'Q' : {
+                    if (m_WhiteCastle == CASTLE_SHORT)
+                        m_WhiteCastle = BOTH_CASTLE;
+                        break;
+                }
+
+                // blacks
+                case 'k' : m_BlackCastle = CASTLE_SHORT; break;
+                case 'q' : {
+                    if (m_BlackCastle == CASTLE_SHORT)
+                        m_BlackCastle = BOTH_CASTLE;
+                        break;
+                }
+
+
+                break;
+            } 
+            case 3 : {
+                // enpas
+                if (currChar == '-') m_enPas = NO_ENPAS;
+
+                // FIND THE FILE
+                int file = currChar - 'a';
+
+                // FIND THE RANK
+
+                i++; // goto next char
+                currChar = fen[i];
+                if (currChar == '3' || currChar == '6') {
+                    currChar = fen[i];
+                    int rank = (currChar - '0') - 1;
+                    m_enPas = (rank * 16) + file;
+                } else m_enPas = NO_ENPAS; // invalid enpas square check
+            }
+            case 4 : {
+                if (fen[i+1] == ' ') {
+                    // the half move is a single digit character
+                    m_halfMoves = currChar - '0';
+                    i++; // time to move to full moves
+                } else {
+                    std::string temp = "";
+                    temp += currChar;
+                    temp += fen[i+1]; // store a 2 digit string and later convert to int
+                    m_halfMoves = std::stoi(temp);
+                    i+=2; // go to full moves
+                }
+                i++;
+                std::string tmp = "";
+                for(; i < fen.size(); i++)
+                    tmp += fen[i];
+                m_fullMoves = std::stoi(tmp);
+
+                break;
+            }
 
         }
         i++; // go to next char
