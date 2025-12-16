@@ -1,4 +1,5 @@
 #include "board.h"
+#include "move.h"
 
 
 
@@ -25,10 +26,17 @@ Board::Board() :
     for (int i = 0; i < BOARD_SIZE; i++) {
         board[i] = start[i];
     }
-
-    
-
 }
+
+/*
+    move function, updates the board and the internal variables like 
+    m_enpas, half and full moves clock
+*/
+
+void Board::makeMove(Move& move) {
+    // to be cont..
+}
+
 
 std::string Board::getFen() {
     std::string fen = "";

@@ -24,7 +24,7 @@
 #define CASTLE_LONG 2
 
 // enPassent square availability
-#define NO_ENPAS 0
+#define NO_ENPAS -1 // cannot be a valid square
 
 enum Pieces {empty, wpawn, wrook, wknight, wbishop, wqueen, wking, bpawn, brook, bknight, bbishop, bqueen, bking, off};
 
@@ -44,4 +44,5 @@ class Board {
         void print() const;
         std::string getFen();
         void setFen(const std::string&);
+        void makeMove(Move& move);
 };
