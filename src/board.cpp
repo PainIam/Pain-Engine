@@ -34,7 +34,21 @@ Board::Board() :
 */
 
 void Board::makeMove(Move& move) {
-    // to be cont..
+    
+    m_enPas = NO_ENPAS;
+
+
+    // counters
+
+    /*half move is incremented if there's no pawn movement or capture*/
+    if (move.pieceType != wpawn && move.pieceType != bpawn && move.moveType == 0) // 0 IS THE VALUE OF AN EMPTY SQ
+        m_halfMoves++;
+    else m_halfMoves = 0; // reset the counter otherwise
+
+    /*full move is increment only after black moves*/
+    if (move.pieceType > wking)
+        m_fullMoves++;
+
 }
 
 
@@ -49,7 +63,7 @@ std::string Board::getFen() {
         if (!(curr_sq & 0x88)) { // if it is not a valid square
             if (empties != 0) {
                 fen += std::to_string(empties); // push_back empties of empty squares if we're at end of rank
-                empties = 0; // reset the emptieser
+                empties = 0; // reset the empties counter
             }
             curr_sq += rank_inc; // jump down to the the next rank
             if (curr_sq != 112) fen += "/";
