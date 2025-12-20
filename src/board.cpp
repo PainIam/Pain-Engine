@@ -49,6 +49,23 @@ void Board::makeMove(Move& move) {
     if (move.pieceType > wking)
         m_fullMoves++;
 
+    // what type of move was made
+    switch (move.pieceType) {
+        
+        case ORDINARY: {
+
+            board[move.toSq] = move.pieceType;
+            board[move.fromSq] = empty;
+
+            // if it's a pawn move and the pawn moved 2 squares, that means there's an en passant available
+            if ((std::abs(move.toSq - move.fromSq) == 32) && (move.pieceType == wpawn || move.pieceType == bpawn)) {
+
+                m_enPas = move.fromSq + (move.toSq - move.fromSq) / 2;
+            }
+            break;
+        }
+    }
+
 }
 
 
