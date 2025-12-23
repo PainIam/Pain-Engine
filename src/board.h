@@ -1,34 +1,21 @@
 #pragma once
 #include <iostream>
 
-#define BOARD_SIZE 128
+const int BOARD_SIZE = 128;
 
 // side to move
-#define WHITE_MOVE 1
-#define BLACK_MOVE -1
+enum side {BLACK_MOVE = -1, WHITE_MOVE = 1};
 
-// for debugging
-#define INI_FEN "rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-
-// self explainatory
 #define endl "\n"
 
-// castling availability
-#define NO_CASTLE 0
-#define SHORT_CASTLE 1
-#define LONG_CASTLE 2
-#define BOTH_CASTLE 3
+enum class moveType {ORDINARY, KING_SIDE, QUEEN_SIDE, ENPASSANT, PROMO_QUEEN, PROMO_ROOK, PROMO_BISHOP, PROMO_KNIGHT};
 
-// castling direction
-#define CASTLE_SHORT 1
-#define CASTLE_LONG 2
+enum class castling {NONE, SHORT, LONG, BOTH};
 
 // enPassent square availability
-#define NO_ENPAS -1 // cannot be a valid square
+const int NO_ENPAS = -1;
 
 enum Pieces {empty, wpawn, wrook, wknight, wbishop, wqueen, wking, bpawn, brook, bknight, bbishop, bqueen, bking, off};
-
-
 
 class Board {
     private:
@@ -44,5 +31,5 @@ class Board {
         void print() const;
         std::string getFen();
         void setFen(const std::string&);
-        void makeMove(Move& move);
+        void makeMove(const Move& move);
 };

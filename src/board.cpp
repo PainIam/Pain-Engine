@@ -5,8 +5,8 @@
 
 Board::Board() : 
     m_toMove(1), 
-    m_BlackCastle(NO_CASTLE), 
-    m_WhiteCastle(NO_CASTLE),
+    m_BlackCastle(static_cast<int> (castling::NONE)), 
+    m_WhiteCastle(static_cast<int> (castling::NONE)),
     m_enPas(NO_ENPAS), 
     m_halfMoves(0),
     m_fullMoves(1)  {
@@ -33,15 +33,16 @@ Board::Board() :
     m_enpas, half and full moves clock
 */
 
-void Board::makeMove(Move& move) {
+void Board::makeMove(const Move& move) {
     
     m_enPas = NO_ENPAS;
+    m_toMove *= -1; 
 
 
     // counters
 
     /*half move is incremented if there's no pawn movement or capture*/
-    if (move.pieceType != wpawn && move.pieceType != bpawn && move.moveType == 0) // 0 IS THE VALUE OF AN EMPTY SQ
+    if (move.pieceType != wpawn && move.pieceType != bpawn && move.capture == 0) // 0 IS THE VALUE OF AN EMPTY SQ
         m_halfMoves++;
     else m_halfMoves = 0; // reset the counter otherwise
 
@@ -50,9 +51,9 @@ void Board::makeMove(Move& move) {
         m_fullMoves++;
 
     // what type of move was made
-    switch (move.pieceType) {
+    switch (move.moveType) {
         
-        case ORDINARY: {
+        case static_cast<int> (moveType::ORDINARY): {
 
             board[move.toSq] = move.pieceType;
             board[move.fromSq] = empty;
@@ -63,6 +64,71 @@ void Board::makeMove(Move& move) {
                 m_enPas = move.fromSq + (move.toSq - move.fromSq) / 2;
             }
             break;
+        }
+        case static_cast<int> (moveType::KING_SIDE): {
+            // whites
+            if (move.pieceType == wking) {
+                board[117] = wrook;
+                board[118] = wking;
+                board[116] = empty;
+                board[119] = empty;
+                m_WhiteCastle = static_cast<int> (castling::NONE);
+            }
+            // blacks
+            if (move.pieceType == bking){
+                board[5] = brook;
+                board[6] = bking;
+                board[4] = empty;
+                board[7] = empty;  
+                m_BlackCastle = static_cast<int> (castling::NONE);
+
+            }
+            break;
+        } case static_cast<int>(moveType::QUEEN_SIDE) : {
+
+            if (move.pieceType == wking) {
+                board[116] = empty;
+                board[114] = wking;
+                board[112] = empty;
+                board[115] = wrook;
+                m_WhiteCastle = static_cast<int> (castling::NONE);
+            }
+            if (move.pieceType == bking) {
+                board[4] = empty;
+                board[0] = empty;
+                board[3] = brook;
+                board[2] = bking;
+                m_BlackCastle = static_cast<int> (castling::NONE);
+            }
+            break;
+        } case static_cast<int> (moveType::ENPASSANT) : {
+            board[move.toSq] = move.pieceType;
+            board[move.fromSq] = empty;
+
+            // capture the pawn
+            if (move.pieceType == wpawn) {
+                board[move.toSq + 16] = empty;
+            } else board[move.toSq - 16] = empty;
+            break;
+        } default : {
+
+
+            if (m_toMove == BLACK_MOVE) {
+                switch (move.moveType) {
+                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = wqueen; break;
+                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = wrook; break;
+                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = wbishop; break;
+                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = wknight; break;   
+                }
+            } else {
+                switch (move.moveType) {
+                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = bqueen; break;
+                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = brook; break;
+                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = bbishop; break;
+                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = bknight; break;   
+                }          
+            }
+            board[move.fromSq] = empty;
         }
     }
 
@@ -121,21 +187,21 @@ std::string Board::getFen() {
     fen += " "; // more space
 
     // castling right's check
-    if (m_BlackCastle == NO_CASTLE && m_WhiteCastle == NO_CASTLE) fen += "-";
+    if (m_BlackCastle == static_cast<int> (castling::NONE) && m_WhiteCastle == static_cast<int> (castling::NONE)) fen += "-";
     else {
 
         // if value in the m_whitecastle is any of these constants defined in .h
 
         switch (m_WhiteCastle) {
-            case SHORT_CASTLE   : fen += "K"; break; 
-            case LONG_CASTLE    : fen += "Q"; break;
-            case BOTH_CASTLE    : fen += "KQ"; break; 
+            case static_cast<int> (castling::SHORT)   : fen += "K"; break; 
+            case static_cast<int> (castling::LONG)    : fen += "Q"; break;
+            case static_cast<int> (castling::BOTH)    : fen += "KQ"; break; 
         }
 
         switch (m_BlackCastle) {
-            case SHORT_CASTLE   : fen += "k"; break; 
-            case LONG_CASTLE    : fen += "q"; break;
-            case BOTH_CASTLE    : fen += "kq"; break;     
+            case static_cast<int> (castling::SHORT): fen += "k"; break; 
+            case static_cast<int> (castling::LONG) : fen += "q"; break;
+            case static_cast<int> (castling::BOTH) : fen += "kq"; break;     
         }
     }
 
@@ -262,23 +328,23 @@ void Board::setFen(const std::string & fen) {
             case 2 : {
                 // castling
                 if (currChar == '-') {
-                    m_WhiteCastle = NO_CASTLE;
-                    m_BlackCastle = NO_CASTLE; // if there's no castling, available
+                    m_WhiteCastle = static_cast<int>(castling::NONE);
+                    m_BlackCastle = static_cast<int>(castling::NONE); // if there's no castling, available
                 }
 
                 // whites
-                case 'K' : m_WhiteCastle = CASTLE_SHORT; break;
+                case 'K' : m_WhiteCastle = static_cast<int>(castling::SHORT); break;
                 case 'Q' : {
-                    if (m_WhiteCastle == CASTLE_SHORT)
-                        m_WhiteCastle = BOTH_CASTLE;
+                    if (m_WhiteCastle == static_cast<int>(castling::SHORT))
+                        m_WhiteCastle = static_cast<int>(castling::BOTH);
                         break;
                 }
 
                 // blacks
-                case 'k' : m_BlackCastle = CASTLE_SHORT; break;
+                case 'k' : m_BlackCastle = static_cast<int>(castling::SHORT); break;
                 case 'q' : {
-                    if (m_BlackCastle == CASTLE_SHORT)
-                        m_BlackCastle = BOTH_CASTLE;
+                    if (m_BlackCastle == static_cast<int>(castling::SHORT))
+                        m_BlackCastle = static_cast<int>(castling::BOTH);
                         break;
                 }
 
