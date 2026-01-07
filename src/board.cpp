@@ -1,5 +1,4 @@
 #include "board.h"
-#include "move.h"
 
 
 
@@ -31,8 +30,15 @@ Board::Board() :
     m_enpas, half and full moves clock
 */
 
-void Board::makeMove(const Move& move) {
+void Board::makeMove(const Move& move, undoInfo& undo) {
     
+    undo.oldEnpas  = m_enPas;
+    undo.oldBlackCastle = m_BlackCastle;
+    undo.oldWhiteCatle = m_WhiteCastle;
+    undo.capturedPiece = board[move.toSq];
+    undo.oldhalfmoves = m_halfMoves;
+    history.push_back(undo);
+
     m_enPas = NO_ENPAS;
     m_toMove *= -1; 
 
@@ -170,6 +176,88 @@ void Board::makeMove(const Move& move) {
         }
     }
 
+}
+
+
+void Board::unMakeMove(const Move& move) {
+
+    undoInfo undo = history.back();
+    history.pop_back();
+
+    // restore global state
+    m_toMove *= -1;
+    m_BlackCastle = undo.oldBlackCastle;
+    m_WhiteCastle = undo.oldWhiteCatle;
+    m_enPas = undo.oldEnpas;
+    m_halfMoves = undo.oldhalfmoves;
+    m_fullMoves--;
+
+    // restore physical state
+    switch (move.moveType) {
+        case static_cast<int> (moveType::ORDINARY) : {
+            board[move.fromSq] = board[move.toSq];
+            board[move.toSq] = undo.capturedPiece;
+            break;
+        }
+        case static_cast<int> (moveType::KING_SIDE) : {
+            // whites
+            if (move.pieceType == WKING) {
+                board[116] = WKING;
+                board[119] = WROOK;
+                board[118] = EMPTY;
+                board[117] = EMPTY;
+            }
+
+            // blacks
+            if (move.pieceType == BKING) {
+                board[4] = BKING;
+                board[7] = BROOK;
+                board[5] = EMPTY;
+                board[6] = EMPTY;
+            }
+        break;
+        } case static_cast<int> (moveType::QUEEN_SIDE) : {
+            
+
+            if (move.pieceType == WKING) {
+                board[116] = WKING;
+                board[112] = WROOK;
+                board[114] = EMPTY;
+                board[115] = EMPTY;
+            }
+
+            if (move.pieceType == BKING) {
+                board[4] = BKING;
+                board[0] = BROOK;
+                board[2] = EMPTY;
+                board[3] = EMPTY;
+            }
+
+            break;
+        } case static_cast<int> (moveType::ENPASSANT) : {
+            board[move.fromSq] = board[move.toSq];
+            board[move.toSq] = EMPTY;
+
+            // resurrect captured piece
+            if (move.pieceType == WPAWN)
+                board[move.toSq + 16] = BPAWN;
+            else
+                board[move.toSq - 16] = WPAWN;
+
+            break;
+        } default : {
+            // promotion
+            case static_cast<int> (moveType::PROMO_QUEEN):
+            case static_cast<int> (moveType::PROMO_BISHOP):
+            case static_cast<int> (moveType::PROMO_KNIGHT):
+            case static_cast<int> (moveType::PROMO_ROOK) : {
+                board[move.fromSq] = (m_toMove == WHITE_MOVE) ? WPAWN : BPAWN;
+                board[move.toSq] = undo.capturedPiece;
+            }
+            
+        }
+
+    }
 }
 
 
