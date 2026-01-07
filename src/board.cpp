@@ -52,6 +52,29 @@ std::vector<Move> Board::generateMoves() {
                             }
                         }
                     }
+
+                    // rook check
+                    if (piece == WROOK || piece == BROOK) {
+                        std::array<int, 4> rookOffsets {-16, -1, 1, 16};
+
+                        for (auto offset : rookOffsets) {
+                            int target = i + offset;
+                            while((0x88 & target) == 0) {
+                                if (board[target] == EMPTY) {
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                    
+                                    target += offset;
+                                } else if(isEnemy(target)) {
+                                    // add target and stop sliding
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move); 
+                                    break;
+                                } else
+                                    break; // friendly for sure !
+                            }
+                        }
+                    }
                 }
         }
     }
@@ -224,7 +247,8 @@ void Board::unMakeMove(const Move& move) {
     m_WhiteCastle = undo.oldWhiteCatle;
     m_enPas = undo.oldEnpas;
     m_halfMoves = undo.oldhalfmoves;
-    m_fullMoves--;
+    
+    if (m_toMove == WHITE_MOVE) m_fullMoves--;
 
     // restore physical state
     switch (move.moveType) {
