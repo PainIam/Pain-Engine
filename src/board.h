@@ -3,6 +3,8 @@
 #include <array>
 #include <vector>
 #include "move.h"
+
+
 const int BOARD_SIZE = 128;
 
 // side to move
@@ -36,4 +38,7 @@ class Board {
         void setFen(const std::string&);
         void makeMove(const Move& move, undoInfo& undo);
         void unMakeMove(const Move& move);
+        bool isMyPiece(int piece);
+        bool isEnemy(int piece);
+        std::vector<Move> generateMoves();
 };

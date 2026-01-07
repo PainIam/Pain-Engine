@@ -25,6 +25,40 @@ Board::Board() :
     board = start;
 }
 
+std::vector<Move> Board::generateMoves() {
+    std::vector<Move> moves;
+
+    // LOOP THROUGH BOARD
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        if ((0x88 & i) == 0) {
+            if (board[i] != INVALID && board[i] != EMPTY)
+                if (isMyPiece(board[i])) {
+                    // found a friendly piece!!!
+                    int piece = board[i];
+
+                    // what sorta piece is it ?
+                    // let's try knight first
+                    if (piece == WKNIGHT || piece == BKNIGHT) {
+                        std::array<int, 8> knightOffsets {-33, -31, -18, -14, 14, 18, 31, 33};
+
+                        // loop through the offsets
+                        for (auto offset : knightOffsets) {
+                            int target = offset + i;
+                            if (((0x88 & target) == 0)) {
+                                if (isEnemy(target) || board[target] == EMPTY) {
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                }
+                            }
+                        }
+                    }
+                }
+        }
+    }
+
+    return moves;
+}
+
 /*
     move function, updates the board and the internal variables like 
     m_enpas, half and full moves clock
@@ -260,6 +294,40 @@ void Board::unMakeMove(const Move& move) {
     }
 }
 
+
+bool Board::isMyPiece(int piece) {
+
+    if (m_toMove == WHITE_MOVE) {
+        if (piece > EMPTY && piece < BPAWN)
+            return true;
+        return false;
+    }
+
+    if (m_toMove == BLACK_MOVE) {
+        if (piece > WKING && piece != INVALID)
+            return true;
+        return false;
+    }
+
+    return false; // contingency
+}
+
+bool Board::isEnemy(int piece) {
+
+    if (m_toMove == WHITE_MOVE) {
+        if (piece > WKING && piece != INVALID)
+            return true;
+        return false;
+    }
+
+    if (m_toMove == BLACK_MOVE) {
+        if (piece > EMPTY && piece < BPAWN)
+            return true;
+        return false;
+    }
+
+    return false;
+}
 
 std::string Board::getFen() {
     std::string fen = "";
