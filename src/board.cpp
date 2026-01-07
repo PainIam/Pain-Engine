@@ -11,21 +11,19 @@ Board::Board() :
     m_halfMoves(0),
     m_fullMoves(1)  {
     // create temp variable which should nicely initialize board
-    int start[BOARD_SIZE] = {
-    brook, bknight, bbishop, bqueen, bking, bbishop, bknight, brook, off, off, off, off, off, off, off, off,
-    bpawn, bpawn, bpawn, bpawn, bpawn, bpawn, bpawn, bpawn, off, off, off, off, off, off, off, off,
-    empty, empty, empty, empty, empty, empty, empty, empty, off, off, off, off, off, off, off, off,
-    empty, empty, empty, empty, empty, empty, empty, empty, off, off, off, off, off, off, off, off,
-    empty, empty, empty, empty, empty, empty, empty, empty, off, off, off, off, off, off, off, off,
-    empty, empty, empty, empty, empty, empty, empty, empty, off, off, off, off, off, off, off, off,
-    wpawn, wpawn, wpawn, wpawn, wpawn, wpawn, wpawn, wpawn, off, off, off, off, off, off, off, off,
-    wrook, wknight, wbishop, wqueen, wking, wbishop, wknight, wrook, off, off, off, off, off, off, off, off
+    std::array<int, BOARD_SIZE> start = {
+    BROOK, BKNIGHT, BBISHOP, BQUEEN, BKING, BBISHOP, BKNIGHT, BROOK, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    BPAWN, BPAWN, BPAWN, BPAWN, BPAWN, BPAWN, BPAWN, BPAWN, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    WPAWN, WPAWN, WPAWN, WPAWN, WPAWN, WPAWN, WPAWN, WPAWN, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID,
+    WROOK, WKNIGHT, WBISHOP, WQUEEN, WKING, WBISHOP, WKNIGHT, WROOK, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID, INVALID
     };
 
     // initialize board with start
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        board[i] = start[i];
-    }
+    board = start;
 }
 
 /*
@@ -42,12 +40,12 @@ void Board::makeMove(const Move& move) {
     // counters
 
     /*half move is incremented if there's no pawn movement or capture*/
-    if (move.pieceType != wpawn && move.pieceType != bpawn && move.capture == 0) // 0 IS THE VALUE OF AN EMPTY SQ
+    if (move.pieceType != WPAWN && move.pieceType != BPAWN && move.capture == 0) // 0 IS THE VALUE OF AN EMPTY SQ
         m_halfMoves++;
     else m_halfMoves = 0; // reset the counter otherwise
 
     /*full move is increment only after black moves*/
-    if (move.pieceType > wking)
+    if (move.pieceType > WKING)
         m_fullMoves++;
 
     // what type of move was made
@@ -56,10 +54,10 @@ void Board::makeMove(const Move& move) {
         case static_cast<int> (moveType::ORDINARY): {
 
             board[move.toSq] = move.pieceType;
-            board[move.fromSq] = empty;
+            board[move.fromSq] = EMPTY;
 
             // if it's a pawn move and the pawn moved 2 squares, that means there's an en passant available
-            if ((std::abs(move.toSq - move.fromSq) == 32) && (move.pieceType == wpawn || move.pieceType == bpawn)) {
+            if ((std::abs(move.toSq - move.fromSq) == 32) && (move.pieceType == WPAWN || move.pieceType == BPAWN)) {
 
                 m_enPas = move.fromSq + (move.toSq - move.fromSq) / 2;
             }
@@ -67,68 +65,108 @@ void Board::makeMove(const Move& move) {
         }
         case static_cast<int> (moveType::KING_SIDE): {
             // whites
-            if (move.pieceType == wking) {
-                board[117] = wrook;
-                board[118] = wking;
-                board[116] = empty;
-                board[119] = empty;
+            if (move.pieceType == WKING) {
+                board[117] = WROOK;
+                board[118] = WKING;
+                board[116] = EMPTY;
+                board[119] = EMPTY;
                 m_WhiteCastle = static_cast<int> (castling::NONE);
             }
             // blacks
-            if (move.pieceType == bking){
-                board[5] = brook;
-                board[6] = bking;
-                board[4] = empty;
-                board[7] = empty;  
+            if (move.pieceType == BKING){
+                board[5] = BROOK;
+                board[6] = BKING;
+                board[4] = EMPTY;
+                board[7] = EMPTY;  
                 m_BlackCastle = static_cast<int> (castling::NONE);
 
             }
             break;
         } case static_cast<int>(moveType::QUEEN_SIDE) : {
 
-            if (move.pieceType == wking) {
-                board[116] = empty;
-                board[114] = wking;
-                board[112] = empty;
-                board[115] = wrook;
+            if (move.pieceType == WKING) {
+                board[116] = EMPTY;
+                board[114] = WKING;
+                board[112] = EMPTY;
+                board[115] = WROOK;
                 m_WhiteCastle = static_cast<int> (castling::NONE);
             }
-            if (move.pieceType == bking) {
-                board[4] = empty;
-                board[0] = empty;
-                board[3] = brook;
-                board[2] = bking;
+            if (move.pieceType == BKING) {
+                board[4] = EMPTY;
+                board[0] = EMPTY;
+                board[3] = BROOK;
+                board[2] = BKING;
                 m_BlackCastle = static_cast<int> (castling::NONE);
             }
             break;
         } case static_cast<int> (moveType::ENPASSANT) : {
             board[move.toSq] = move.pieceType;
-            board[move.fromSq] = empty;
+            board[move.fromSq] = EMPTY;
 
             // capture the pawn
-            if (move.pieceType == wpawn) {
-                board[move.toSq + 16] = empty;
-            } else board[move.toSq - 16] = empty;
+            if (move.pieceType == WPAWN) {
+                board[move.toSq + 16] = EMPTY;
+            } else board[move.toSq - 16] = EMPTY;
             break;
         } default : {
 
 
             if (m_toMove == BLACK_MOVE) {
                 switch (move.moveType) {
-                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = wqueen; break;
-                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = wrook; break;
-                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = wbishop; break;
-                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = wknight; break;   
+                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = WQUEEN; break;
+                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = WROOK; break;
+                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = WBISHOP; break;
+                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = WKNIGHT; break;   
                 }
             } else {
                 switch (move.moveType) {
-                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = bqueen; break;
-                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = brook; break;
-                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = bbishop; break;
-                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = bknight; break;   
+                    case static_cast<int> (moveType::PROMO_QUEEN) : board[move.toSq] = BQUEEN; break;
+                    case static_cast<int> (moveType::PROMO_ROOK)  : board[move.toSq] = BROOK; break;
+                    case static_cast<int> (moveType::PROMO_BISHOP): board[move.toSq] = BBISHOP; break;
+                    case static_cast<int> (moveType::PROMO_KNIGHT): board[move.toSq] = BKNIGHT; break;   
                 }          
             }
-            board[move.fromSq] = empty;
+            board[move.fromSq] = EMPTY;
+        }
+    }
+
+    // handle castling
+    if (m_BlackCastle != static_cast<int> (castling::NONE) || m_WhiteCastle != static_cast<int> (castling::NONE)) {
+        
+        // if black king moved, remove all castling rights
+        if (board[4] != BKING)
+            m_BlackCastle = static_cast<int> (castling::NONE);
+
+        // the converse
+        if (board[116] != WKING)
+            m_WhiteCastle = static_cast<int> (castling::NONE);
+
+        // remove black long castle
+        if (board[0] != BROOK) {
+            if (m_BlackCastle == static_cast<int> (castling::BOTH))
+                m_BlackCastle = static_cast<int> (castling::SHORT);
+            else m_BlackCastle = static_cast<int> (castling::NONE); // only long available so remove it
+        }
+        
+        //remove black short castle
+        if (board[7] != BROOK) {
+            if (m_BlackCastle == static_cast<int> (castling::BOTH))
+                m_BlackCastle = static_cast<int> (castling::LONG);
+            else m_BlackCastle = static_cast<int> (castling::NONE);
+        }
+
+        // REMOVE WHITE LONG CASTLE
+        if (board[112] != WROOK) {
+            if (m_WhiteCastle == static_cast<int> (castling::BOTH))
+                m_WhiteCastle = static_cast<int> (castling::SHORT);
+            else m_WhiteCastle = static_cast<int> (castling::NONE);
+        }
+
+        // REMOVE WHITE SHORT CASTLE
+        if (board[119] != WROOK) {
+            if (m_WhiteCastle == static_cast<int> (castling::BOTH))
+                m_WhiteCastle = static_cast<int> (castling::LONG);
+            else m_WhiteCastle = static_cast<int> (castling::NONE);
         }
     }
 
@@ -140,36 +178,36 @@ std::string Board::getFen() {
 
     int rank_inc = 7;
     int curr_sq = 0;
-    int empties = 0; // to empties empty squares
+    int empties = 0; // to empties EMPTY squares
  
     while(curr_sq <= 119) {
         if (!(curr_sq & 0x88)) { // if it is not a valid square
             if (empties != 0) {
-                fen += std::to_string(empties); // push_back empties of empty squares if we're at end of rank
+                fen += std::to_string(empties); // push_back empties of EMPTY squares if we're at end of rank
                 empties = 0; // reset the empties counter
             }
             curr_sq += rank_inc; // jump down to the the next rank
             if (curr_sq != 112) fen += "/";
         } else { // valid board square
-            if (board[curr_sq] != empty) { // if there's a piece on the square 
+            if (board[curr_sq] != EMPTY) { // if there's a piece on the square 
                 if (empties != 0) fen += std::to_string(empties); // if there were empties before the piece, record it to the string
                 empties = 0; // reset the empties counter
             }
             // record the character which we're at
             switch(board[curr_sq]) {
-					case wking  : fen += "K";	break;
-					case wqueen : fen += "Q";   break;
-					case wrook  : fen += "R";	break;
-					case wbishop: fen += "B";   break;
-					case wknight: fen += "N";   break;
-					case wpawn  : fen += "P";   break;
-					case bking  : fen += "k";	break;
-					case bqueen : fen += "q";   break;
-					case brook  : fen += "r";   break;
-					case bbishop: fen += "b";   break;
-					case bknight: fen += "n";   break;
-					case bpawn  : fen += "p";	break;
-                    default     : empties++; // increment the empty squares counter if for some reason this is an empty square
+					case WKING  : fen += "K";	break;
+					case WQUEEN : fen += "Q";   break;
+					case WROOK  : fen += "R";	break;
+					case WBISHOP: fen += "B";   break;
+					case WKNIGHT: fen += "N";   break;
+					case WPAWN  : fen += "P";   break;
+					case BKING  : fen += "k";	break;
+					case BQUEEN : fen += "q";   break;
+					case BROOK  : fen += "r";   break;
+					case BBISHOP: fen += "b";   break;
+					case BKNIGHT: fen += "n";   break;
+					case BPAWN  : fen += "p";	break;
+                    default     : empties++; // increment the EMPTY squares counter if for some reason this is an EMPTY square
             }
 
         }
@@ -199,9 +237,9 @@ std::string Board::getFen() {
         }
 
         switch (m_BlackCastle) {
-            case static_cast<int> (castling::SHORT): fen += "k"; break; 
-            case static_cast<int> (castling::LONG) : fen += "q"; break;
-            case static_cast<int> (castling::BOTH) : fen += "kq"; break;     
+            case static_cast<int> (castling::SHORT)    : fen += "k"; break; 
+            case static_cast<int> (castling::LONG)     : fen += "q"; break;
+            case static_cast<int> (castling::BOTH)     : fen += "kq"; break;     
         }
     }
 
@@ -267,11 +305,11 @@ std::string Board::getFen() {
 
 void Board::setFen(const std::string & fen) {
 
-    /*  empty board to prepare it with new board structure,
+    /*  EMPTY board to prepare it with new board structure,
         from the fen string we're parsing
     */
     for (unsigned int i = 0; i < BOARD_SIZE; i++) {
-        board[i] = empty;
+        board[i] = EMPTY;
     }
 
     int i = 0; // keeps track of where we are in the fen str
@@ -299,20 +337,20 @@ void Board::setFen(const std::string & fen) {
                 if (currChar == '/') bindex += 8; // my 0x88 layout allows this
                 switch (currChar) {
                     // whites
-                    case 'K' : board[bindex] = wking;   bindex++; break;
-                    case 'Q' : board[bindex] = wqueen;  bindex++; break;
-                    case 'B' : board[bindex] = wbishop; bindex++; break;
-                    case 'N' : board[bindex] = wknight; bindex++; break;
-                    case 'R' : board[bindex] = wrook;   bindex++; break;
-                    case 'P' : board[bindex] = wpawn;   bindex++; break;
+                    case 'K' : board[bindex] = WKING;   bindex++; break;
+                    case 'Q' : board[bindex] = WQUEEN;  bindex++; break;
+                    case 'B' : board[bindex] = WBISHOP; bindex++; break;
+                    case 'N' : board[bindex] = WKNIGHT; bindex++; break;
+                    case 'R' : board[bindex] = WROOK;   bindex++; break;
+                    case 'P' : board[bindex] = WPAWN;   bindex++; break;
 
                     // blacks
-                    case 'k': board[bindex] = bking;    bindex++; break;
-                    case 'q': board[bindex] = bqueen;   bindex++; break;
-                    case 'r': board[bindex] = brook;    bindex++; break;
-                    case 'b': board[bindex] = bbishop;  bindex++; break;
-                    case 'n': board[bindex] = bknight;  bindex++; break;
-                    case 'p': board[bindex] = bpawn;    bindex++; break;
+                    case 'k': board[bindex] = BKING;    bindex++; break;
+                    case 'q': board[bindex] = BQUEEN;   bindex++; break;
+                    case 'r': board[bindex] = BROOK;    bindex++; break;
+                    case 'b': board[bindex] = BBISHOP;  bindex++; break;
+                    case 'n': board[bindex] = BKNIGHT;  bindex++; break;
+                    case 'p': board[bindex] = BPAWN;    bindex++; break;
                 
                     // the dafault case is that it is a number <= 8, so skip those x squares 
                     default : bindex += currChar - '0'; break;

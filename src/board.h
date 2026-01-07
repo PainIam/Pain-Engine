@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <array>
 
 const int BOARD_SIZE = 128;
 
@@ -15,11 +16,11 @@ enum class castling {NONE, SHORT, LONG, BOTH};
 // enPassent square availability
 const int NO_ENPAS = -1;
 
-enum Pieces {empty, wpawn, wrook, wknight, wbishop, wqueen, wking, bpawn, brook, bknight, bbishop, bqueen, bking, off};
+enum Pieces {EMPTY,WPAWN, WROOK, WKNIGHT, WBISHOP, WQUEEN, WKING, BPAWN, BROOK, BKNIGHT, BBISHOP, BQUEEN, BKING, INVALID};
 
 class Board {
     private:
-        int board[BOARD_SIZE];
+        std::array<int, BOARD_SIZE> board;
         int m_toMove;
         int m_enPas;
         int m_WhiteCastle;
