@@ -164,21 +164,21 @@ std::vector<Move> Board::generateMoves() {
                             int rank = target >> 4;
                             if (rank == 0 || rank == 7) {
                                 if (color) {
-                                    moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                    moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                    moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                    moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));
+                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));
                                 } else {
-                                    moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                    moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                    moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                    moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));                                  
+                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));                                  
                                 }
                             } else
                                 {Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY)); moves.push_back(move);}
                             
                             // double push
-                            int doubleTarget = i + (color == true) ? -32 : 32;
+                            int doubleTarget = i + (color == true ? -32 : 32);
                             int startRank = i >> 4;
 
                             if ((startRank == 1 && !color) || (startRank == 6 && color)) {
@@ -210,10 +210,10 @@ std::vector<Move> Board::generateMoves() {
                                     } else if (isEnemy(target)) {
                                         if (rank == 6) {
                                             // promotion possible
-                                            moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                            moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                            moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                            moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
+                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
                                         } else
                                             moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
                                     }
@@ -231,10 +231,10 @@ std::vector<Move> Board::generateMoves() {
                                     } else if (isEnemy(target)) {
                                         if (rank == 1) {
                                             // promotion for grabs
-                                            moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                            moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                            moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                            moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
+                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
                                         } else
                                             moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
                                     }
@@ -244,9 +244,7 @@ std::vector<Move> Board::generateMoves() {
                     }
                 }
             }
-
-
-    }
+        }
 
     return moves;
     }
