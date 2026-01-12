@@ -153,7 +153,9 @@ std::vector<Move> Board::generateMoves() {
                     // pawns 
                     if (piece == WPAWN || piece == BPAWN) {
                         
-                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;                       
+                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
+                        std::array<int, 2> BlackDiagOffsets  {15, 17};
+                        std::array<int, 2> WhiteDiagOffsets  {-17, -15};
 
                         auto target =  i + (color == true?  -16 : 16); 
                         if ((0x88 & target) == 0 && board[target] == EMPTY) {
@@ -189,64 +191,61 @@ std::vector<Move> Board::generateMoves() {
                                     moves.push_back(move);
                                 }
                             }
-                        } 
+                        }
+                        // diagnal capture square can empty when capturing enpassant
+                        // diagnal capture
+                        int rank = i >> 4;
+
+
+                        if (!color) {
+                            // blacks
+                            for (auto offset : BlackDiagOffsets) {
+                                auto target = i + offset;
+
+
+                                if ((0x88 & target) == 0) {
+                                    if (board[target] == EMPTY && target == m_enPas) {
+                                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
+                                        moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
+                                    } else if (isEnemy(target)) {
+                                        if (rank == 6) {
+                                            // promotion possible
+                                            moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                            moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                            moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                            moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
+                                        } else
+                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
+                                    }
+                                }
+                            }
+                        } else {
+                            // whites
+                            for (auto offset : WhiteDiagOffsets) {
+                                auto target = i + offset;
+
+                                if ((0x88 & target) == 0) {
+                                    if (board[target] == EMPTY && target == m_enPas) {
+                                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
+                                        moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
+                                    } else if (isEnemy(target)) {
+                                        if (rank == 1) {
+                                            // promotion for grabs
+                                            moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                            moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                            moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                            moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
+                                        } else
+                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-        // diagnal capture square can empty when capturing enpassant
-        // diagnal capture
-        std::array<int, 2> BlackDiagOffsets  {15, 17};
-        std::array<int, 2> WhiteDiagOffsets  {-17, -15};
 
-        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
-        int rank = i >> 4;
-
-
-        if (!color) {
-            // blacks
-            for (auto offset : BlackDiagOffsets) {
-                auto target = i + offset;
-
-
-                if ((0x88 & target) == 0) {
-                    if (board[target] == EMPTY && target == m_enPas) {
-                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
-                        moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
-                    } else if (isEnemy(target)) {
-                        if (rank == 6) {
-                            // promotion possible
-                            moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                            moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                            moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                            moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
-                        } else
-                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
-                    }
-                }
-            }
-        } else {
-            // whites
-            for (auto offset : WhiteDiagOffsets) {
-                auto target = i + offset;
-
-                if ((0x88 & target) == 0) {
-                    if (board[target] == EMPTY && target == m_enPas) {
-                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
-                        moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
-                    } else if (isEnemy(target)) {
-                        if (rank == 1) {
-                            // promotion for grabs
-                            moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                            moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                            moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                            moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
-                        } else
-                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
-                    }
-                }
-            }
-        }
     }
 
     return moves;
