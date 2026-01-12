@@ -1,4 +1,5 @@
 #include "board.h"
+#include "move.h"
 
 
 
@@ -31,7 +32,7 @@ std::vector<Move> Board::generateMoves() {
     // LOOP THROUGH BOARD
     for (int i = 0; i < BOARD_SIZE; i++) {
         if ((0x88 & i) == 0) {
-            if (board[i] != INVALID && board[i] != EMPTY)
+            if (board[i] != INVALID && board[i] != EMPTY) {
                 if (isMyPiece(board[i])) {
                     // found a friendly piece!!!
                     int piece = board[i];
@@ -43,7 +44,7 @@ std::vector<Move> Board::generateMoves() {
 
                         // loop through the offsets
                         for (auto offset : knightOffsets) {
-                            int target = offset + i;
+                            auto target = offset + i;
                             if (((0x88 & target) == 0)) {
                                 if (isEnemy(target) || board[target] == EMPTY) {
                                     Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
@@ -58,7 +59,7 @@ std::vector<Move> Board::generateMoves() {
                         std::array<int, 4> rookOffsets {-16, -1, 1, 16};
 
                         for (auto offset : rookOffsets) {
-                            int target = i + offset;
+                            auto target = i + offset;
                             while((0x88 & target) == 0) {
                                 if (board[target] == EMPTY) {
                                     Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
@@ -75,12 +76,183 @@ std::vector<Move> Board::generateMoves() {
                             }
                         }
                     }
+                    
+                    // bishop
+                    if (piece == WBISHOP || piece == BBISHOP) {
+
+                        std::array<int, 4> bishopOffsets {-17, -15, 15, 17};
+
+                        // go through each offset
+                        for (auto offset : bishopOffsets) {
+                            auto target = i + offset;
+
+                            while ((0x88 & target) == 0) {
+                                
+                                if (board[target] == EMPTY) {
+                                    // valid move, keep going
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                    
+                                    target += offset;
+                                } else if (isEnemy(target)) {
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                    break;
+                                } else
+                                    break;
+                            }
+                        }
+                    }
+
+                    // queen
+                    if (piece == WQUEEN || piece == BQUEEN) {
+
+                        std::array<int, 8> queenOffsets {-17, -16, -15, -1, 1, 15, 16, 17};
+
+                        for (auto offset : queenOffsets) {
+                            auto target = i + offset;
+
+                            while ((0x88 & target) == 0) {
+                                
+                                if (board[target] == EMPTY) {
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+
+                                    target += offset;
+                                } else if (isEnemy(target)) {
+
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                    break;                                    
+                                } else
+                                    break;
+                            }
+                        }
+                    }
+
+                    // king -> ordinary
+                    if (piece == WKING || piece == BKING) {
+
+                        std::array<int, 8> kingOffsets {-17, -16, -15, -1, 1, 15, 16, 17};
+
+                        for (auto offset : kingOffsets) {
+                            auto target = i + offset;
+
+                            if ((0x88 & target) == 0) {
+
+                                if (board[target] == EMPTY || isEnemy(target)) {
+
+                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                } 
+                                // it'll just go to the next offset if it's a friendly piece
+                            }
+                        }
+                    }
+
+                    // pawns 
+                    if (piece == WPAWN || piece == BPAWN) {
+                        
+                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;                       
+
+                        auto target =  i + (color == true?  -16 : 16); 
+                        if ((0x88 & target) == 0 && board[target] == EMPTY) {
+
+                            // single push
+                            int rank = target >> 4;
+                            if (rank == 0 || rank == 7) {
+                                if (color) {
+                                    moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                    moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                    moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                    moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));
+                                } else {
+                                    moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                                    moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                                    moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                                    moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));                                  
+                                }
+                            } else
+                                {Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY)); moves.push_back(move);}
+                            
+                            // double push
+                            int doubleTarget = i + (color == true) ? -32 : 32;
+                            int startRank = i >> 4;
+
+                            if ((startRank == 1 && !color) || (startRank == 6 && color)) {
+
+                                // check if the square ahead by 2 is empty, the first one is definetely empty
+                                if (board[doubleTarget] == EMPTY) {
+
+                                    // add move
+                                    Move move(piece, i, doubleTarget, board[doubleTarget], static_cast<int> (moveType::ORDINARY));
+                                    moves.push_back(move);
+                                }
+                            }
+                        } 
+                    }
                 }
+            }
+
+        // diagnal capture square can empty when capturing enpassant
+        // diagnal capture
+        std::array<int, 2> BlackDiagOffsets  {15, 17};
+        std::array<int, 2> WhiteDiagOffsets  {-17, -15};
+
+        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
+        int rank = i >> 4;
+
+
+        if (!color) {
+            // blacks
+            for (auto offset : BlackDiagOffsets) {
+                auto target = i + offset;
+
+
+                if ((0x88 & target) == 0) {
+                    if (board[target] == EMPTY && target == m_enPas) {
+                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
+                        moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
+                    } else if (isEnemy(target)) {
+                        if (rank == 6) {
+                            // promotion possible
+                            moves.push_back(Move(BBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                            moves.push_back(Move(BROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                            moves.push_back(Move(BKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                            moves.push_back(Move(BQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
+                        } else
+                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
+                    }
+                }
+            }
+        } else {
+            // whites
+            for (auto offset : WhiteDiagOffsets) {
+                auto target = i + offset;
+
+                if ((0x88 & target) == 0) {
+                    if (board[target] == EMPTY && target == m_enPas) {
+                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
+                        moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
+                    } else if (isEnemy(target)) {
+                        if (rank == 1) {
+                            // promotion for grabs
+                            moves.push_back(Move(WBISHOP, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
+                            moves.push_back(Move(WROOK, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
+                            moves.push_back(Move(WKNIGHT, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
+                            moves.push_back(Move(WQUEEN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
+                        } else
+                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
+                    }
+                }
+            }
         }
     }
 
     return moves;
+    }
 }
+
 
 /*
     move function, updates the board and the internal variables like 

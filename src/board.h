@@ -2,7 +2,6 @@
 #include <iostream>
 #include <array>
 #include <vector>
-#include "move.h"
 
 
 const int BOARD_SIZE = 128;
