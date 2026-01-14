@@ -148,6 +148,42 @@ std::vector<Move> Board::generateMoves() {
                                 // it'll just go to the next offset if it's a friendly piece
                             }
                         }
+                        
+                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
+                        if (m_BlackCastle != static_cast<int> (castling::NONE) || m_WhiteCastle != static_cast<int> (castling::NONE)) {
+                            if(color) {
+                                if (m_WhiteCastle == static_cast<int> (castling::SHORT) || m_WhiteCastle == static_cast<int> (castling::BOTH)) {
+                                    if (board[i + 1] == EMPTY && board[i + 2] == EMPTY) {
+                                        if (!isSquareAttacked(i) && !isSquareAttacked(i + 1) && !isSquareAttacked(i + 2)) {
+                                            moves.push_back(Move(piece, i, i + 2, board[i + 2], static_cast<int> (moveType::KING_SIDE)));
+                                        }
+                                    }
+                                }
+                                if (m_WhiteCastle == static_cast<int> (castling::LONG) || m_WhiteCastle == static_cast<int> (castling::BOTH) ) {
+                                    if (board[i - 1] == EMPTY && board[i - 2] == EMPTY && board[i - 3] == EMPTY) {
+                                        if (!isSquareAttacked(i) && !isSquareAttacked(i-1) && !isSquareAttacked(i-2)) {
+                                            moves.push_back(Move(piece, i, (i - 2), board[i - 2], static_cast<int> (moveType::QUEEN_SIDE)));
+                                        }
+                                    }
+                                }
+                            }
+                            if (!color) {
+                                if (m_BlackCastle == static_cast<int> (castling::SHORT) || m_BlackCastle == static_cast<int> (castling::BOTH)) {
+                                    if (board[i + 1] == EMPTY && board[i + 2] == EMPTY) {
+                                        if (!isSquareAttacked(i) && !isSquareAttacked(i + 1) && !isSquareAttacked(i + 2)) {
+                                            moves.push_back(Move(piece, i, (i + 2), board[i + 2], static_cast<int> (moveType::KING_SIDE)));
+                                        }
+                                    }
+                                }
+                                if (m_BlackCastle == static_cast<int> (castling::LONG) || m_BlackCastle == static_cast<int> (castling::BOTH) ) {
+                                    if (board[i - 1] == EMPTY && board[i - 2] == EMPTY && board[i - 3] == EMPTY) {
+                                        if (!isSquareAttacked(i) && !isSquareAttacked(i - 1) && !isSquareAttacked(i - 2)) {
+                                            moves.push_back(Move(piece, i, (i - 2), board[i - 2], static_cast<int> (moveType::QUEEN_SIDE)));
+                                        }
+                                    }
+                                }
+                            }
+                        } 
                     }
 
                     // pawns 
@@ -249,6 +285,93 @@ std::vector<Move> Board::generateMoves() {
     return moves;
     }
 }
+
+
+
+
+
+bool Board::isMyPiece(int piece) {
+
+    if (m_toMove == WHITE_MOVE) 
+        return (piece > EMPTY && piece < BPAWN);
+    
+
+    if (m_toMove == BLACK_MOVE)
+        return (piece > WKING && piece != INVALID);
+
+    return false; // contingency
+}
+
+bool Board::isEnemy(int piece) {
+
+    if (m_toMove == WHITE_MOVE) {
+        if (piece > WKING && piece != INVALID)
+            return true;
+        return false;
+    }
+
+    if (m_toMove == BLACK_MOVE) {
+        if (piece > EMPTY && piece < BPAWN)
+            return true;
+        return false;
+    }
+
+    return false;
+}
+
+bool Board::isSquareAttacked(int dest) {
+
+    m_toMove *= -1;
+    std::vector<Move> moves;
+
+    moves = generateMoves();
+
+    for (auto& move : moves) {
+        if (move.toSq == dest) {
+            m_toMove *= -1;
+            return true;
+        }
+    }
+
+    m_toMove *= -1;
+    return false;
+
+
+}
+
+int Board::findKingSquare(int side) {
+    int king = (side == WHITE_MOVE) ? WKING : BKING;
+    for (int i = 0; i < BOARD_SIZE; i++) {
+        if ((i & 0x88) == 0 && board[i] == king)
+            return i;
+    }
+    return -1;
+}
+
+long Board::perft(int depth) {
+    if (depth == 0)
+        return 1;
+
+    long nodes = 0;
+    std::vector<Move> moves = generateMoves();
+
+    for (const auto& move : moves) {
+        undoInfo undo;
+        makeMove(move, undo);
+
+        // after makeMove, side to move has switched
+        int kingSq = findKingSquare(-m_toMove);
+
+        if (!isSquareAttacked(kingSq)) {
+            nodes += perft(depth - 1);
+        }
+
+        unMakeMove(move);
+    }
+
+    return nodes;
+}
+
 
 
 /*
@@ -488,39 +611,6 @@ void Board::unMakeMove(const Move& move) {
 }
 
 
-bool Board::isMyPiece(int piece) {
-
-    if (m_toMove == WHITE_MOVE) {
-        if (piece > EMPTY && piece < BPAWN)
-            return true;
-        return false;
-    }
-
-    if (m_toMove == BLACK_MOVE) {
-        if (piece > WKING && piece != INVALID)
-            return true;
-        return false;
-    }
-
-    return false; // contingency
-}
-
-bool Board::isEnemy(int piece) {
-
-    if (m_toMove == WHITE_MOVE) {
-        if (piece > WKING && piece != INVALID)
-            return true;
-        return false;
-    }
-
-    if (m_toMove == BLACK_MOVE) {
-        if (piece > EMPTY && piece < BPAWN)
-            return true;
-        return false;
-    }
-
-    return false;
-}
 
 std::string Board::getFen() {
     std::string fen = "";
