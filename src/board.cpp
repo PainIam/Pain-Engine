@@ -1,5 +1,6 @@
 #include "board.h"
 #include "move.h"
+#include "movegen.h"
 
 
 
@@ -26,318 +27,8 @@ Board::Board() :
     board = start;
 }
 
-std::vector<Move> Board::generateMoves() {
-    std::vector<Move> moves;
-
-    // LOOP THROUGH BOARD
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        if ((0x88 & i) == 0) {
-            if (board[i] != INVALID && board[i] != EMPTY) {
-                if (isMyPiece(board[i])) {
-                    // found a friendly piece!!!
-                    int piece = board[i];
-
-                    // what sorta piece is it ?
-                    // let's try knight first
-                    if (piece == WKNIGHT || piece == BKNIGHT) {
-                        std::array<int, 8> knightOffsets {-33, -31, -18, -14, 14, 18, 31, 33};
-
-                        // loop through the offsets
-                        for (auto offset : knightOffsets) {
-                            auto target = offset + i;
-                            if (((0x88 & target) == 0)) {
-                                if (isEnemy(target) || board[target] == EMPTY) {
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                }
-                            }
-                        }
-                    }
-
-                    // rook check
-                    if (piece == WROOK || piece == BROOK) {
-                        std::array<int, 4> rookOffsets {-16, -1, 1, 16};
-
-                        for (auto offset : rookOffsets) {
-                            auto target = i + offset;
-                            while((0x88 & target) == 0) {
-                                if (board[target] == EMPTY) {
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                    
-                                    target += offset;
-                                } else if(isEnemy(target)) {
-                                    // add target and stop sliding
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move); 
-                                    break;
-                                } else
-                                    break; // friendly for sure !
-                            }
-                        }
-                    }
-                    
-                    // bishop
-                    if (piece == WBISHOP || piece == BBISHOP) {
-
-                        std::array<int, 4> bishopOffsets {-17, -15, 15, 17};
-
-                        // go through each offset
-                        for (auto offset : bishopOffsets) {
-                            auto target = i + offset;
-
-                            while ((0x88 & target) == 0) {
-                                
-                                if (board[target] == EMPTY) {
-                                    // valid move, keep going
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                    
-                                    target += offset;
-                                } else if (isEnemy(target)) {
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                    break;
-                                } else
-                                    break;
-                            }
-                        }
-                    }
-
-                    // queen
-                    if (piece == WQUEEN || piece == BQUEEN) {
-
-                        std::array<int, 8> queenOffsets {-17, -16, -15, -1, 1, 15, 16, 17};
-
-                        for (auto offset : queenOffsets) {
-                            auto target = i + offset;
-
-                            while ((0x88 & target) == 0) {
-                                
-                                if (board[target] == EMPTY) {
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-
-                                    target += offset;
-                                } else if (isEnemy(target)) {
-
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                    break;                                    
-                                } else
-                                    break;
-                            }
-                        }
-                    }
-
-                    // king -> ordinary
-                    if (piece == WKING || piece == BKING) {
-
-                        std::array<int, 8> kingOffsets {-17, -16, -15, -1, 1, 15, 16, 17};
-
-                        for (auto offset : kingOffsets) {
-                            auto target = i + offset;
-
-                            if ((0x88 & target) == 0) {
-
-                                if (board[target] == EMPTY || isEnemy(target)) {
-
-                                    Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                } 
-                                // it'll just go to the next offset if it's a friendly piece
-                            }
-                        }
-                        
-                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
-                        if (m_BlackCastle != static_cast<int> (castling::NONE) || m_WhiteCastle != static_cast<int> (castling::NONE)) {
-                            if(color) {
-                                if (m_WhiteCastle == static_cast<int> (castling::SHORT) || m_WhiteCastle == static_cast<int> (castling::BOTH)) {
-                                    if (board[i + 1] == EMPTY && board[i + 2] == EMPTY) {
-                                        if (!isSquareAttacked(i) && !isSquareAttacked(i + 1) && !isSquareAttacked(i + 2)) {
-                                            moves.push_back(Move(piece, i, i + 2, board[i + 2], static_cast<int> (moveType::KING_SIDE)));
-                                        }
-                                    }
-                                }
-                                if (m_WhiteCastle == static_cast<int> (castling::LONG) || m_WhiteCastle == static_cast<int> (castling::BOTH) ) {
-                                    if (board[i - 1] == EMPTY && board[i - 2] == EMPTY && board[i - 3] == EMPTY) {
-                                        if (!isSquareAttacked(i) && !isSquareAttacked(i-1) && !isSquareAttacked(i-2)) {
-                                            moves.push_back(Move(piece, i, (i - 2), board[i - 2], static_cast<int> (moveType::QUEEN_SIDE)));
-                                        }
-                                    }
-                                }
-                            }
-                            if (!color) {
-                                if (m_BlackCastle == static_cast<int> (castling::SHORT) || m_BlackCastle == static_cast<int> (castling::BOTH)) {
-                                    if (board[i + 1] == EMPTY && board[i + 2] == EMPTY) {
-                                        if (!isSquareAttacked(i) && !isSquareAttacked(i + 1) && !isSquareAttacked(i + 2)) {
-                                            moves.push_back(Move(piece, i, (i + 2), board[i + 2], static_cast<int> (moveType::KING_SIDE)));
-                                        }
-                                    }
-                                }
-                                if (m_BlackCastle == static_cast<int> (castling::LONG) || m_BlackCastle == static_cast<int> (castling::BOTH) ) {
-                                    if (board[i - 1] == EMPTY && board[i - 2] == EMPTY && board[i - 3] == EMPTY) {
-                                        if (!isSquareAttacked(i) && !isSquareAttacked(i - 1) && !isSquareAttacked(i - 2)) {
-                                            moves.push_back(Move(piece, i, (i - 2), board[i - 2], static_cast<int> (moveType::QUEEN_SIDE)));
-                                        }
-                                    }
-                                }
-                            }
-                        } 
-                    }
-
-                    // pawns 
-                    if (piece == WPAWN || piece == BPAWN) {
-                        
-                        bool color = (m_toMove == WHITE_MOVE) ? 1 : 0;
-                        std::array<int, 2> BlackDiagOffsets  {15, 17};
-                        std::array<int, 2> WhiteDiagOffsets  {-17, -15};
-
-                        auto target =  i + (color == true?  -16 : 16); 
-                        if ((0x88 & target) == 0 && board[target] == EMPTY) {
-
-                            // single push
-                            int rank = target >> 4;
-                            if (rank == 0 || rank == 7) {
-                                if (color) {
-                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                    moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));
-                                } else {
-                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                    moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));                                  
-                                }
-                            } else
-                                {Move move(piece, i, target, board[target], static_cast<int> (moveType::ORDINARY)); moves.push_back(move);}
-                            
-                            // double push
-                            int doubleTarget = i + (color == true ? -32 : 32);
-                            int startRank = i >> 4;
-
-                            if ((startRank == 1 && !color) || (startRank == 6 && color)) {
-
-                                // check if the square ahead by 2 is empty, the first one is definetely empty
-                                if (board[doubleTarget] == EMPTY) {
-
-                                    // add move
-                                    Move move(piece, i, doubleTarget, board[doubleTarget], static_cast<int> (moveType::ORDINARY));
-                                    moves.push_back(move);
-                                }
-                            }
-                        }
-                        // diagnal capture square can empty when capturing enpassant
-                        // diagnal capture
-                        int rank = i >> 4;
 
 
-                        if (!color) {
-                            // blacks
-                            for (auto offset : BlackDiagOffsets) {
-                                auto target = i + offset;
-
-
-                                if ((0x88 & target) == 0) {
-                                    if (board[target] == EMPTY && target == m_enPas) {
-                                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
-                                        moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
-                                    } else if (isEnemy(target)) {
-                                        if (rank == 6) {
-                                            // promotion possible
-                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN)));    
-                                        } else
-                                            moves.push_back(Move(BPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
-                                    }
-                                }
-                            }
-                        } else {
-                            // whites
-                            for (auto offset : WhiteDiagOffsets) {
-                                auto target = i + offset;
-
-                                if ((0x88 & target) == 0) {
-                                    if (board[target] == EMPTY && target == m_enPas) {
-                                        // the only time a diagnal move is allowed is if there's an enemy or an enpassant square up for grabs
-                                        moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ENPASSANT)));
-                                    } else if (isEnemy(target)) {
-                                        if (rank == 1) {
-                                            // promotion for grabs
-                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_BISHOP)));
-                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_ROOK)));
-                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_KNIGHT)));
-                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::PROMO_QUEEN))); 
-                                        } else
-                                            moves.push_back(Move(WPAWN, i, target, board[target], static_cast<int> (moveType::ORDINARY))); // ordinary pawn diagnal grab
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-    return moves;
-    }
-}
-
-
-
-
-
-bool Board::isMyPiece(int piece) {
-
-    if (m_toMove == WHITE_MOVE) 
-        return (piece > EMPTY && piece < BPAWN);
-    
-
-    if (m_toMove == BLACK_MOVE)
-        return (piece > WKING && piece != INVALID);
-
-    return false; // contingency
-}
-
-bool Board::isEnemy(int piece) {
-
-    if (m_toMove == WHITE_MOVE) {
-        if (piece > WKING && piece != INVALID)
-            return true;
-        return false;
-    }
-
-    if (m_toMove == BLACK_MOVE) {
-        if (piece > EMPTY && piece < BPAWN)
-            return true;
-        return false;
-    }
-
-    return false;
-}
-
-bool Board::isSquareAttacked(int dest) {
-
-    m_toMove *= -1;
-    std::vector<Move> moves;
-
-    moves = generateMoves();
-
-    for (auto& move : moves) {
-        if (move.toSq == dest) {
-            m_toMove *= -1;
-            return true;
-        }
-    }
-
-    m_toMove *= -1;
-    return false;
-
-
-}
 
 int Board::findKingSquare(int side) {
     int king = (side == WHITE_MOVE) ? WKING : BKING;
@@ -348,27 +39,21 @@ int Board::findKingSquare(int side) {
     return -1;
 }
 
+
 long Board::perft(int depth) {
-    if (depth == 0)
-        return 1;
+    if (depth == 0) return 1;
+
+    std::vector<Move> moves;
+    // Call your new static function
+    MoveGen::moveGen(*this, moves); 
 
     long nodes = 0;
-    std::vector<Move> moves = generateMoves();
-
-    for (const auto& move : moves) {
-        undoInfo undo;
-        makeMove(move, undo);
-
-        // after makeMove, side to move has switched
-        int kingSq = findKingSquare(-m_toMove);
-
-        if (!isSquareAttacked(kingSq)) {
-            nodes += perft(depth - 1);
-        }
-
-        unMakeMove(move);
+    for (auto& m : moves) {
+        undoInfo u;
+        makeMove(m, u);
+        nodes += perft(depth - 1);
+        unMakeMove(m);
     }
-
     return nodes;
 }
 
@@ -612,271 +297,171 @@ void Board::unMakeMove(const Move& move) {
 
 
 
-std::string Board::getFen() {
+std::string Board::getFen() const {
     std::string fen = "";
 
-    int rank_inc = 7;
-    int curr_sq = 0;
-    int empties = 0; // to empties EMPTY squares
- 
-    while(curr_sq <= 119) {
-        if (!(curr_sq & 0x88)) { // if it is not a valid square
-            if (empties != 0) {
-                fen += std::to_string(empties); // push_back empties of EMPTY squares if we're at end of rank
-                empties = 0; // reset the empties counter
-            }
-            curr_sq += rank_inc; // jump down to the the next rank
-            if (curr_sq != 112) fen += "/";
-        } else { // valid board square
-            if (board[curr_sq] != EMPTY) { // if there's a piece on the square 
-                if (empties != 0) fen += std::to_string(empties); // if there were empties before the piece, record it to the string
-                empties = 0; // reset the empties counter
-            }
-            // record the character which we're at
-            switch(board[curr_sq]) {
-					case WKING  : fen += "K";	break;
-					case WQUEEN : fen += "Q";   break;
-					case WROOK  : fen += "R";	break;
-					case WBISHOP: fen += "B";   break;
-					case WKNIGHT: fen += "N";   break;
-					case WPAWN  : fen += "P";   break;
-					case BKING  : fen += "k";	break;
-					case BQUEEN : fen += "q";   break;
-					case BROOK  : fen += "r";   break;
-					case BBISHOP: fen += "b";   break;
-					case BKNIGHT: fen += "n";   break;
-					case BPAWN  : fen += "p";	break;
-                    default     : empties++; // increment the EMPTY squares counter if for some reason this is an EMPTY square
-            }
+    for (int rank = 0; rank < 8; rank++) {
+        int empty = 0;
+        for (int file = 0; file < 8; file++) {
+            int sq = rank * 16 + file;
+            int p = board[sq];
+            if (p == EMPTY) {
+                empty++;
+            } else {
+                if (empty) { fen += std::to_string(empty); empty = 0; }
+                switch(p) {
+                    case WKING:   fen += 'K'; break;
+                    case WQUEEN:  fen += 'Q'; break;
+                    case WROOK:   fen += 'R'; break;
+                    case WBISHOP: fen += 'B'; break;
+                    case WKNIGHT: fen += 'N'; break;
+                    case WPAWN:   fen += 'P'; break;
 
+                    case BKING:   fen += 'k'; break;
+                    case BQUEEN:  fen += 'q'; break;
+                    case BROOK:   fen += 'r'; break;
+                    case BBISHOP: fen += 'b'; break;
+                    case BKNIGHT: fen += 'n'; break;
+                    case BPAWN:   fen += 'p'; break;
+                }
+            }
         }
-        curr_sq++; // proceed to next square.
+        if (empty) fen += std::to_string(empty);
+        if (rank != 7) fen += '/';
     }
 
-    // end of pieces processing
-    fen += " "; // add space 
+    fen += ' ';
+    fen += (m_toMove == WHITE_MOVE) ? 'w' : 'b';
+    fen += ' ';
 
-    // check if it is w/b turn
-    if (m_toMove == WHITE_MOVE) fen += "w";
-    else fen += "b";
-
-    // end of turn processing
-    fen += " "; // more space
-
-    // castling right's check
-    if (m_BlackCastle == static_cast<int> (castling::NONE) && m_WhiteCastle == static_cast<int> (castling::NONE)) fen += "-";
+    if (m_WhiteCastle == 0 && m_BlackCastle == 0) fen += '-';
     else {
-
-        // if value in the m_whitecastle is any of these constants defined in .h
-
-        switch (m_WhiteCastle) {
-            case static_cast<int> (castling::SHORT)   : fen += "K"; break; 
-            case static_cast<int> (castling::LONG)    : fen += "Q"; break;
-            case static_cast<int> (castling::BOTH)    : fen += "KQ"; break; 
-        }
-
-        switch (m_BlackCastle) {
-            case static_cast<int> (castling::SHORT)    : fen += "k"; break; 
-            case static_cast<int> (castling::LONG)     : fen += "q"; break;
-            case static_cast<int> (castling::BOTH)     : fen += "kq"; break;     
-        }
+        if (m_WhiteCastle & static_cast<int>(castling::SHORT)) fen += 'K';
+        if (m_WhiteCastle & static_cast<int>(castling::LONG))  fen += 'Q';
+        if (m_BlackCastle & static_cast<int>(castling::SHORT)) fen += 'k';
+        if (m_BlackCastle & static_cast<int>(castling::LONG))  fen += 'q';
     }
 
-    fen += " "; // add space to prepare for next token
+    fen += ' ';
 
-    // prepare for enPas
-    if (m_enPas == NO_ENPAS) fen += "-";
+    if (m_enPas == NO_ENPAS) fen += '-';
     else {
-
-        // there's an enpassent square available
-
-        /*
-         find the exact rank and file
-         indices in 0x88 are represented by the first4 bits representing the rank, the last the file
-         we can isolate last 4 bits by shifting the first 4 like index >> 4, if we have 0000 1111, 
-         shifting it gives us 0000
-
-         for files we isolate the first 4 by ANDing the index with 0xF(15), which in binary is 0000 1111
-         and thing with any byte will result in the first 4 bits being 0, thus resulting in 1111 assuming
-         we AND-ed it with 15
-        */
-
-        switch(m_enPas & 0xF) {
-            case 0  : fen += "a"; break;
-            case 1  : fen += "b"; break;
-            case 2  : fen += "c"; break;
-            case 3  : fen += "d"; break;
-            case 4  : fen += "e"; break;
-            case 5  : fen += "f"; break;
-            case 6  : fen += "g"; break;
-            case 7  : fen += "h"; break;
-            default :
-                fen += "error in enPas square";
-        }
-
-        switch(m_enPas >> 4) {
-            case 3  : fen += "3"; break;
-            case 6  : fen += "6"; break;
-            default : 
-                fen += "error in enPas square"; 
-        }
+        int file = m_enPas & 0xF;
+        int rank = m_enPas >> 4;
+        fen += ('a' + file);
+        fen += ('1' + rank);
     }
 
-    fen += " ";
-
-    // half moves since last capture or pawn movement
+    fen += ' ';
     fen += std::to_string(m_halfMoves);
-
-    fen += " ";
-
-    // full moves since game, starts at 1, incremented after first black move
+    fen += ' ';
     fen += std::to_string(m_fullMoves);
 
-    //return fen string
     return fen;
-
 }
+
 
 
 /*
     takes an fen string and sets the board as per the fen
 */
 
-void Board::setFen(const std::string & fen) {
+void Board::setFen(const std::string& fen) {
+    // Clear board
+    for (int i = 0; i < BOARD_SIZE; i++) board[i] = EMPTY;
 
-    /*  EMPTY board to prepare it with new board structure,
-        from the fen string we're parsing
-    */
-    for (unsigned int i = 0; i < BOARD_SIZE; i++) {
-        board[i] = EMPTY;
-    }
+    int rank = 0; // 0 = rank 8
+    int file = 0;
 
-    int i = 0; // keeps track of where we are in the fen str
+    int stage = 0; // 0=pieces,1=toMove,2=castling,3=enPas,4=half/full moves
+    size_t i = 0;
 
-    int bindex = 0; // where we are in the box, starts with 0, because my a8 = 0
+    while (i < fen.size()) {
+        char c = fen[i];
 
-    int currStage = 0; // makes it easier to tell which stage of the fen we're at
-
-    char currChar; // to store current character of the str
-
-    while (i < fen.size()) { // iterate until the end of the fen
-
-        currChar = fen[i];
-
-        // do we need to go to the next stage of the fen ?
-        if (currChar == ' ') {
-            i++; // go to the next fen character
-            currChar = fen[i];
-            currStage++;
+        if (c == ' ') {
+            stage++;
+            i++;
+            continue;
         }
 
-        // what stage are we at ?
-        switch (currStage) {
-            case 0 : {
-                if (currChar == '/') bindex += 8; // my 0x88 layout allows this
-                switch (currChar) {
-                    // whites
-                    case 'K' : board[bindex] = WKING;   bindex++; break;
-                    case 'Q' : board[bindex] = WQUEEN;  bindex++; break;
-                    case 'B' : board[bindex] = WBISHOP; bindex++; break;
-                    case 'N' : board[bindex] = WKNIGHT; bindex++; break;
-                    case 'R' : board[bindex] = WROOK;   bindex++; break;
-                    case 'P' : board[bindex] = WPAWN;   bindex++; break;
-
-                    // blacks
-                    case 'k': board[bindex] = BKING;    bindex++; break;
-                    case 'q': board[bindex] = BQUEEN;   bindex++; break;
-                    case 'r': board[bindex] = BROOK;    bindex++; break;
-                    case 'b': board[bindex] = BBISHOP;  bindex++; break;
-                    case 'n': board[bindex] = BKNIGHT;  bindex++; break;
-                    case 'p': board[bindex] = BPAWN;    bindex++; break;
-                
-                    // the dafault case is that it is a number <= 8, so skip those x squares 
-                    default : bindex += currChar - '0'; break;
-                }
-                break;
-            }
-            case 1 : {
-                // who's turn to move
-                if (currChar == 'w') m_toMove = WHITE_MOVE;
-                else m_toMove = BLACK_MOVE;
-                break;
-            }
-            case 2 : {
-                // castling
-                if (currChar == '-') {
-                    m_WhiteCastle = static_cast<int>(castling::NONE);
-                    m_BlackCastle = static_cast<int>(castling::NONE); // if there's no castling, available
-                }
-
-                // whites
-                case 'K' : m_WhiteCastle = static_cast<int>(castling::SHORT); break;
-                case 'Q' : {
-                    if (m_WhiteCastle == static_cast<int>(castling::SHORT))
-                        m_WhiteCastle = static_cast<int>(castling::BOTH);
-                        break;
-                }
-
-                // blacks
-                case 'k' : m_BlackCastle = static_cast<int>(castling::SHORT); break;
-                case 'q' : {
-                    if (m_BlackCastle == static_cast<int>(castling::SHORT))
-                        m_BlackCastle = static_cast<int>(castling::BOTH);
-                        break;
-                }
-
-
-                break;
-            } 
-            case 3 : {
-                // enpas
-                if (currChar == '-') m_enPas = NO_ENPAS;
-
-                // FIND THE FILE
-                int file = currChar - 'a';
-
-                // FIND THE RANK
-
-                i++; // goto next char
-                currChar = fen[i];
-                if (currChar == '3' || currChar == '6') {
-                    currChar = fen[i];
-                    int rank = (currChar - '0') - 1;
-                    m_enPas = (rank * 16) + file;
-                } else m_enPas = NO_ENPAS; // invalid enpas square check
-            }
-            case 4 : {
-                if (fen[i+1] == ' ') {
-                    // the half move is a single digit character
-                    m_halfMoves = currChar - '0';
-                    i++; // time to move to full moves
+        switch(stage) {
+            case 0: // piece placement
+                if (c == '/') {
+                    rank++;
+                    file = 0;
+                } else if (c >= '1' && c <= '8') {
+                    file += c - '0';
                 } else {
-                    std::string temp = "";
-                    temp += currChar;
-                    temp += fen[i+1]; // store a 2 digit string and later convert to int
-                    m_halfMoves = std::stoi(temp);
-                    i+=2; // go to full moves
+                    int square = rank * 16 + file;
+                    switch(c) {
+                        case 'K': board[square] = WKING; break;
+                        case 'Q': board[square] = WQUEEN; break;
+                        case 'R': board[square] = WROOK; break;
+                        case 'B': board[square] = WBISHOP; break;
+                        case 'N': board[square] = WKNIGHT; break;
+                        case 'P': board[square] = WPAWN; break;
+
+                        case 'k': board[square] = BKING; break;
+                        case 'q': board[square] = BQUEEN; break;
+                        case 'r': board[square] = BROOK; break;
+                        case 'b': board[square] = BBISHOP; break;
+                        case 'n': board[square] = BKNIGHT; break;
+                        case 'p': board[square] = BPAWN; break;
+                    }
+                    file++;
                 }
-                i++;
-                std::string tmp = "";
-                for(; i < fen.size(); i++)
-                    tmp += fen[i];
-                m_fullMoves = std::stoi(tmp);
-
                 break;
+
+            case 1: // turn
+                m_toMove = (c == 'w') ? WHITE_MOVE : BLACK_MOVE;
+                break;
+
+            case 2: // castling
+                m_WhiteCastle = m_BlackCastle = static_cast<int>(castling::NONE);
+                if (c != '-') {
+                    for (size_t j = i; j < fen.size() && fen[j] != ' '; j++) {
+                        switch(fen[j]) {
+                            case 'K': m_WhiteCastle |= static_cast<int>(castling::SHORT); break;
+                            case 'Q': m_WhiteCastle |= static_cast<int>(castling::LONG); break;
+                            case 'k': m_BlackCastle |= static_cast<int>(castling::SHORT); break;
+                            case 'q': m_BlackCastle |= static_cast<int>(castling::LONG); break;
+                        }
+                    }
+                }
+                break;
+
+            case 3: // en passant
+                if (c == '-') m_enPas = NO_ENPAS;
+                else {
+                    int file_ep = c - 'a';
+                    i++;
+                    int rank_ep = fen[i] - '1';
+                    m_enPas = rank_ep * 16 + file_ep;
+                }
+                break;
+
+            case 4: // halfmove/fullmove
+            {
+                size_t j = i;
+                // halfmoves
+                while (j < fen.size() && fen[j] != ' ') j++;
+                m_halfMoves = std::stoi(fen.substr(i, j-i));
+                i = j+1;
+                // fullmoves
+                m_fullMoves = std::stoi(fen.substr(i));
+                return; // done
             }
-
         }
-        i++; // go to next char
+        i++;
     }
-
 }
 
 
 void Board::print() const {
     std::string pieces {".PRNBQKprnbqk"}; // string pieces to map appropriate piece with enum --see board.h
 
-    std::cout << endl;
+    std::cout << "\n";
     for (unsigned int rank = 0; rank < 8; rank++) {
         std::cout << 8 - rank << "  "; 
         for (unsigned int file = 0; file < 16; file++) {
@@ -885,9 +470,9 @@ void Board::print() const {
             if ((square & 0x88) == 0)
                 std::cout << pieces[board[square]] << " ";
         }
-        std::cout << endl;
+        std::cout << "\n";
     }
-    std::cout << "   a b c d e f g h" << endl;
+    std::cout << "   a b c d e f g h" << "\n";
     
 
 }

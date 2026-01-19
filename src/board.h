@@ -1,5 +1,5 @@
 #pragma once
-#define endl "\n"
+#include "move.h"
 #include <iostream>
 #include <array>
 #include <vector>
@@ -9,10 +9,18 @@ const int NO_ENPAS = -1;
 
 enum class moveType {ORDINARY, KING_SIDE, QUEEN_SIDE, ENPASSANT, PROMO_QUEEN, PROMO_ROOK, PROMO_BISHOP, PROMO_KNIGHT};
 enum class castling {NONE, SHORT, LONG, BOTH};
-enum Pieces {EMPTY,WPAWN, WROOK, WKNIGHT, WBISHOP, WQUEEN, WKING, BPAWN, BROOK, BKNIGHT, BBISHOP, BQUEEN, BKING, INVALID};
+enum Pieces {EMPTY = 0,
+    WPAWN = 1, WROOK, WKNIGHT, WBISHOP, WQUEEN, WKING,
+    BPAWN = 7, BROOK, BKNIGHT, BBISHOP, BQUEEN, BKING,
+    INVALID = 99};
 enum side {BLACK_MOVE = -1, WHITE_MOVE = 1};
 
+struct MoveGen;
+
 class Board {
+
+    friend struct MoveGen;
+
     private:
         std::array<int, BOARD_SIZE> board;
         std::vector<undoInfo> history;
@@ -25,13 +33,10 @@ class Board {
     public:
         Board();
         void print() const;
-        std::string getFen();
+        std::string getFen() const;
         void setFen(const std::string&);
         void makeMove(const Move& move, undoInfo& undo);
         void unMakeMove(const Move& move);
-        bool isMyPiece(int piece);
-        bool isEnemy(int piece);
-        bool isSquareAttacked(int dest);
         long perft(int depth);
         int findKingSquare(int side);
         std::vector<Move> generateMoves();
