@@ -137,6 +137,28 @@ void MoveGen::genQueenMoves(const Board& bd, int piece, std::vector<Move>& moves
     }
 }
 
+void MoveGen::genKingMoves(const Board& bd, int piece, std::vector<Move>& moves, int sq) {
+
+    std::array<int, 8> kingOffsets {-17, -16, -15, -1, 1, 15, 16, 17};
+
+
+    for (const auto offset : kingOffsets) {
+
+        auto target = sq + offset;
+
+        if ((0x88 & target) == 0) {
+            auto targetPiece = bd.board[target];
+
+            if (!isFriendly(targetPiece, bd.m_toMove)) {
+                moves.push_back(Move(piece, sq, target, targetPiece, static_cast<int> (moveType::ORDINARY)));
+                continue;
+            }
+
+        }
+
+
+    }
+}
 
 bool MoveGen::isFriendly(int piece, int myColor) {
 
