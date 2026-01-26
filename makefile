@@ -1,4 +1,4 @@
-SRC = src/board.cpp src/pain.cpp src/movegen.cpp
+SRC = src/board.cpp src/pain.cpp src/movegen.cpp src/test.cpp
 OBJ = $(SRC:.cpp=.o)
 
 

@@ -4,9 +4,10 @@
 #include <array>
 #include <vector>
 
+
+// board constants
 const int BOARD_SIZE = 128;
 const int NO_ENPAS = -1;
-
 enum class moveType {ORDINARY, KING_SIDE, QUEEN_SIDE, ENPASSANT, PROMO_QUEEN, PROMO_ROOK, PROMO_BISHOP, PROMO_KNIGHT};
 enum class castling {NONE, SHORT, LONG, BOTH};
 enum Pieces {EMPTY = 0,
